@@ -1,0 +1,91 @@
+[tool.poetry]
+name = "physics-simulator"
+version = "0.1.0"
+description = "A template for making new python projects with all the bells and whistles"
+authors = ["EdmundGoodman <egoodman3141@gmail.com>"]
+license = "MIT"
+readme = "README.md"
+repository = "https://github.com/EdmundGoodman/physics_simulator"
+homepage = "https://edmundgoodman.github.io/physics_simulator"
+
+[tool.poetry.scripts]
+main = "physics_simulator.main:main"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+
+[tool.poetry.group.dev.dependencies]
+black = "^23.7.0"
+isort = "^5.12.0"
+pre-commit = "^2.20.0"
+pre-commit-hooks = "^4.3.0"
+bandit = "^1.7.5"
+mypy = "^1.4.1"
+vulture = "^2.7"
+ruff = "^0.0.277"
+
+[tool.bandit]
+exclude_dirs = [".venv/"]
+skips = ["B101"]
+
+[tool.black]
+target-version = ["py310"]
+
+[tool.isort]
+profile = "black"
+py_version = 310  # Latest supported, 311 is not
+# src_paths = ["src/"]  # This is not a supported keyword?
+filter_files = true
+
+[tool.mypy]
+python_version = "3.10"
+strict = true
+ignore_missing_imports = true
+implicit_reexport = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+# https://blog.wolt.com/engineering/2021/09/30/professional-grade-mypy-configuration/
+disallow_untyped_defs = true
+disallow_any_unimported = true
+no_implicit_optional = true
+check_untyped_defs = true
+warn_return_any = true
+show_error_codes = true
+# [[tool.mypy.overrides]]
+# module = "module_name.*"
+# ignore_missing_imports = true
+
+[tool.ruff]
+select = ["ALL"]
+ignore = [
+    ### From https://github.com/jerry-git/pytest-split/blob/master/pyproject.toml
+    "ANN",    # Type hints related, let mypy handle these.
+    "COM812", # "Trailing comma missing". If black is happy, I'm happy.
+    "E501",   # "Line too long". If black is happy, I'm happy.
+    "EM101",  # "Exception must not use a string literal, assign to variable first"
+    "EM102",  # "Exception must not use an f-string literal, assign to variable first"
+    # "RET504",   # "Unnecessary variable assignment before `return` statement"
+    "S101",   # "Use of `assert` detected"
+    "SIM108", # "Use ternary operator ...". Ternary is harmful for readability in some cases.
+    "TRY003", # "Avoid specifying long messages outside the exception class"
+    # "D",      # Docstrings related. We want to keep this to replace `pydocstyle`
+    "D203", # Disable incompatible docstring rules to avoid warnings
+    "D212", #  "
+    ### Edmund's preferences
+    "UP009",  # "UTF-8 encoding declaration is unnecessary". Adding UTF-8 pragmas is best practice
+    "T201",   # Allow print statements!
+    "INP001", # "Add an `__init__.py`". The `test` directory should be a namespace package (https://stackoverflow.com/a/8450858)!
+    "I",      # Ignore import sorting, as we using `isort` instead, as it has more functionality
+]
+# Support Python 3.10+.
+target-version = "py310"
+src = ["src/"]
+
+[tool.vulture]
+ignore_names = ["test_*", "fixture_*", "pytest_*"]
+paths = ["src/"]
+exclude = [".venv/"]

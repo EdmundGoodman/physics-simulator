@@ -1,5 +1,7 @@
-#Edmund Goodman - Creative Commons Attribution-NonCommercial-ShareAlike 2.5
-#Physics Simulator
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""Docstring for an example tool."""
+
 from turtle import *
 import math, os, colorsys
 

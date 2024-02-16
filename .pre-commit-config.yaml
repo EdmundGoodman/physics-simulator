@@ -1,0 +1,86 @@
+repos:
+  ### Run various small, general hooks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.0.1
+    hooks:
+      # Git checks
+      - id: check-added-large-files
+      - id: check-merge-conflict
+      # General file checks
+      - id: destroyed-symlinks
+      - id: check-vcs-permalinks
+      - id: detect-private-key
+      - id: end-of-file-fixer
+        exclude: .idea/.*
+      - id: fix-byte-order-marker
+      - id: mixed-line-ending
+      - id: trailing-whitespace
+        args: ["--markdown-linebreak-ext=md"]
+      # Python specific checks
+      - id: check-ast
+      - id: check-builtin-literals
+      - id: check-case-conflict
+      - id: check-docstring-first
+      - id: check-executables-have-shebangs
+      - id: check-shebang-scripts-are-executable
+      - id: debug-statements
+      - id: fix-encoding-pragma
+
+  ### Run local tooling
+  # These tools are intentionally run locally, so everything runs in the same
+  # virtual environment, with a locked set of dependencies
+  - repo: local
+    hooks:
+      - id: ruff
+        name: ruff
+        description: lints python code.
+        entry: ruff check --force-exclude
+        language: python
+        require_serial: true
+        types_or: [python, pyi]
+        args: ["--fix", "--exit-non-zero-on-fix"]
+
+      - id: black
+        name: black
+        description: formats python code.
+        entry: black
+        language: python
+        require_serial: true
+        types_or: [python, pyi]
+
+      - id: isort
+        name: isort
+        description: sorts python imports.
+        entry: isort
+        require_serial: true
+        language: python
+        types_or: [python, pyi]
+        args: ["--filter-files"]
+
+      - id: mypy
+        name: mypy
+        description: statically analyses python type annotations.
+        entry: mypy
+        require_serial: true
+        language: python
+        types_or: [python, pyi]
+        args: ["--scripts-are-modules"]
+        # verbose: true
+
+      - id: vulture
+        name: vulture
+        description: finds unused python code.
+        entry: vulture
+        language: python
+        types: [python]
+        pass_filenames: false
+        require_serial: true
+
+      - id: bandit
+        name: bandit
+        description: finds common python security issues.
+        entry: bandit
+        language: python
+        types: [python]
+        require_serial: true
+        args: ["--configfile", "pyproject.toml"]
