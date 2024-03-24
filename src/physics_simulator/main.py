@@ -1,161 +1,173 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""Docstring for an example tool."""
+"""A simple n-body simulator in python."""
 
-from turtle import *
-import math, os, colorsys
+import sys
+from math import cos, pi, sin, sqrt
 
-class body:
-    def __init__(self, name, position, velocity, acceleration, radius, mass, charge):
-        #Initialise all the variables
-        self.name = name #name
-        self.radius = radius #radius
-        self.mass = mass #mass
-        self.charge = charge
+from typing_extensions import Self
 
-        self.position = position #(x, y)
-        self.velocity = velocity #(x, y)
-        self.acceleration = acceleration #(x, y)
+DIMENSIONS = 2
+GRAVITATIONAL_CONSTANT = 0.01
 
-    def displayBody(self):
-        #Print various attributes of the body
-        print("{}".format(self.name))
-        print("{} {} {}".format(self.position, self.velocity, self.acceleration))
-        print("{} {} {}".format(self.radius, self.mass, self.charge))
+INITIAL_MAX_MASS = 5
+INITIAL_RADIUS = 100
+INITIAL_RIGHT_VELOCITY = 0.1
 
-    def updateAcceleration(self, otherBodies):
-        #Calculate and update acceleration bases upon gravity
-        self.acceleration = [0 for i in self.acceleration]
+VISUALISE: bool = True
 
-        for o in otherBodies:
-            #Calculate the vector & the hypotenuse between the bodies (dist & hyp)
-            dist, hyp = [], 0
-            for i in range(0, len(self.acceleration)):
-                dist.append(self.position[i]-o.position[i])
-                hyp += dist[i]**2
-            hyp = math.sqrt(hyp)
 
-            #Update the acceleration due to gravity
+class Body:
+    """An object representing a celestial body."""
+
+    def __init__(
+        self,
+        position: list[float],
+        velocity: list[float],
+        acceleration: list[float],
+        mass: float,
+    ) -> None:
+        """Instantiate the body with values."""
+        self.position = position
+        self.velocity = velocity
+        self.acceleration = acceleration
+        self.mass = mass
+
+    def update_acceleration(self, others: list[Self]) -> None:
+        """Update the acceleration of the body due to the gravity of others."""
+        self.acceleration = [0.0 for _ in range(DIMENSIONS)]
+
+        for other in others:
+            position_difference: list[float] = []
+            distance = 0.0
+            for i in range(DIMENSIONS):
+                position_difference.append(self.position[i] - other.position[i])
+                distance += (self.position[i] - other.position[i]) ** 2
+
+            # Avoid divide by zero errors
+            distance = max(sqrt(distance), 1e-5)
+
             if self.mass != 0:
-                gravitationalConstant = 0.1 #6.67*(10**−11)
-                force = -1*gravitationalConstant*((self.mass*o.mass)/hyp)
-                acceleration = force/self.mass
-                for i in range(0, len(self.acceleration)):
-                    self.acceleration[i] += (acceleration*dist[i]/hyp)
+                force = (
+                    -1 * GRAVITATIONAL_CONSTANT * ((self.mass * other.mass) / distance)
+                )
+                acceleration = force / self.mass
+                for i in range(DIMENSIONS):
+                    self.acceleration[i] += (
+                        acceleration * position_difference[i] / distance
+                    )
 
-            #Update the acceleration due to electostatic attraction
-            if self.charge != 0:
-                coulombsConstant = 0.1 #8.99*(10**9)
-                force = coulombsConstant*((self.charge*o.charge)/hyp)
-                acceleration = force/self.mass
-                for i in range(0, len(self.acceleration)):
-                    self.acceleration[i] += (acceleration*dist[i]/hyp)
-
-    def updateVelocity(self):
-        #Update velocity based off of acceleration
-        for i in range(0, len(self.velocity)):
+    def update_velocity(self) -> None:
+        """Update the velocity of the body from its acceleration."""
+        for i in range(DIMENSIONS):
             self.velocity[i] += self.acceleration[i]
 
-    def updatePosition(self):
-        #Update position based off of velocity
-        for i in range(0, len(self.position)):
-            self.position[i] += self.velocity[i]*timeStep
+    def update_position(self) -> None:
+        """Update the position of the body from its velocity."""
+        for i in range(DIMENSIONS):
+            self.position[i] += self.velocity[i]
 
-    def getCollisions(self, otherBodies):
-        #Get all the collisions
-        collisions = []
-        for o in otherBodies:
-            #Calculate the hypotenuse between the bodies self and o (hyp)
-            hyp = 0
-            for i in range(0, len(self.acceleration)):
-                hyp += (self.position[i]-o.position[i])**2
-            hyp = math.sqrt(hyp)
-            #If there is a collision
-            if hyp < (self.radius + o.radius):
-                collisions.append([self, o])
-        return collisions
-
-    def showBody(self):
-        #Given a body, blit it to the screen at its relevant position
-        goto([self.position[i] for i in range(0, len(self.acceleration))])
-        pendown(); dot(self.radius*2); penup()
-
-    def getOtherBodies(self, allBodies):
-        #Return all bodies other than self
-        otherBodies = allBodies[:]
-        otherBodies.remove(self)
-        return otherBodies
+    def __repr__(self) -> str:
+        """Get a string representation of the body."""
+        return str(self.position)
 
 
-#Initialise window
-os.system('clear'); title('Physics Simulator')
-#Initialise variables
-loopCount, displayStep, blitStep, timeStep, coloring = 50000, 20, 20, .05, "speed"
+def get_starting_bodies(num_bodies: int) -> list[Body]:
+    """Get the starting set of bodies for the simulation."""
+    bodies: list[Body] = []
+    for i in range(num_bodies):
+        mass = (INITIAL_MAX_MASS / num_bodies) * (i + 1)
+        offset = (i / num_bodies) * (2 * pi)
+        bodies.append(
+            Body(
+                [INITIAL_RADIUS * sin(offset), INITIAL_RADIUS * cos(offset)],
+                [INITIAL_RIGHT_VELOCITY, 0],
+                [0, 0],
+                mass,
+            )
+        )
+    return bodies
 
-#Initialise celestial bodies
-body1 = body("body1", [-475,-100], [1,0], [0,0], 5, 5, 0)
-body2 = body("body2", [-475,0], [2,0], [0,0], 5, 5, 0)
-body3 = body("body3", [-475,100], [-1,0], [0,0], 5, 5, 0)
-allBodies = [body1, body2, body3]
 
-#Turtle prettiness code
-speed(0)
-penup()
-ht()
-setup(1000,700)
-tracer(len(allBodies)*blitStep,0)
+def simulate(num_iterations: int, num_bodies: int) -> list[float]:
+    """
+    Run the simulation.
 
-#Animate the bodies for loopCount # steps
-for iterations in range(loopCount):
-    #Find all collisions in among the bodies
-    collisions = []
-    for b in allBodies:
-        collisions += b.getCollisions(b.getOtherBodies(allBodies))
-    #Sort the contents of the contents of the list, so you can remove duplicates, even if they are opposite ways round
-    collisions = list(set([tuple(sorted(c, key=lambda x: x.name, reverse=True)) for c in collisions]))
-    #if collisions != []: [print([print(x.name, end=" ") for x in y]) for y in collisions]
+    Args:
+    ----
+        num_iterations: The number of iterations to run the simulation for.
+        num_bodies: The number of bodies to simulate.
 
-    #Enact all the collisions
-    for c in collisions:
-        #Update the velocities relative to the bodies masses
-        for i in range(0, len(c[0].velocity)):
-            c[0].velocity[i] = ((c[0].velocity[i]*c[0].mass)+(c[1].velocity[i]*c[1].mass))/(c[0].mass+c[1].mass)
-        #Average the positions
-        for i in range(0, len(c[0].position)):
-            c[0].position[i] = (c[0].position[i]+c[1].position[i])/2
-        #Combine the masses & radii
-        c[0].mass += c[1].mass
-        c[0].radius += c[1].radius
-        #Remove the second body
-        allBodies.remove(c[1])
-        #Replace all instances of the second body with the first body in collisions
-        for i,y in enumerate(collisions):
-            if c[1] in y:
-                collisions[i] = [c[0] if x==c[1] else x for x in y]
+    Returns:
+    -------
+        A flat list of the final positions of all of the bodies.
+    """
+    bodies = get_starting_bodies(num_bodies)
 
-    #Update the acceleration for b relative to the other bodies
-    for b in allBodies:
-        b.updateAcceleration(b.getOtherBodies(allBodies))
+    for _ in range(num_iterations):
+        for body in bodies:
+            body.update_acceleration([value for value in bodies if value != body])
+        for body in bodies:
+            body.update_velocity()
+            body.update_position()
 
-    for b in allBodies:
-        #Display the bodies every displayStep number of iterations
-        if iterations%displayStep==0:
-            #Calculate the coloring of each body
-            if coloring=="speed":
-                colorValue = sum([abs(x) for x in b.velocity])*.2
-            elif coloring=="3d":
-                colorValue = abs(b.position[-1])/1000
-            elif coloring=="mass":
-                colorValue = b.mass/100
-            elif coloring=="charge":
-                colorValue = b.charge/100
-            else: #iterations
-                colorValue = (float(iterations)/1000)*.5
-            color(colorsys.hsv_to_rgb(colorValue,1.0,1.0))
-            b.showBody()
+    result: list[float] = []
+    for body in bodies:
+        result.append(body.position[0])
+        result.append(body.position[1])
+    return result
 
-        #Update the velocity and position of body
-        b.updateVelocity()
-        b.updatePosition()
 
-exitonclick()
+def visualise(num_iterations: int, num_bodies: int) -> None:
+    """
+    Visualise the simulation.
+
+    You don't need to keep this functionality, but it is quite cool to see what
+    the simulation is doing...
+    """
+    if not VISUALISE:
+        return
+
+    from colorsys import hsv_to_rgb
+    from turtle import color, dot, exitonclick, goto, ht, pendown, penup, speed, tracer
+
+    speed(0)
+    ht()
+    tracer(num_bodies)
+
+    bodies = get_starting_bodies(num_bodies)
+    for i in range(num_iterations):
+        for body in bodies:
+            body.update_acceleration([value for value in bodies if value != body])
+        for x, body in enumerate(bodies):
+            body.update_velocity()
+            body.update_position()
+
+            if i % 30 == 0:
+                penup()
+                color(hsv_to_rgb(x / num_bodies, 1.0, 1.0))
+                goto(*[body.position[i] for i in range(DIMENSIONS)])
+                pendown()
+                dot(int(body.mass * 5))
+                penup()
+
+    exitonclick()
+    sys.exit()
+
+
+def main() -> None:
+    """Run the simulation."""
+    num_iterations = 10_000
+    num_bodies = 5
+
+    # Optionally, visualise the simulation then exit. This is not part of the
+    # testing procedure, so can be discarded/broken
+    visualise(num_iterations, num_bodies)
+
+    # Run the simulation if not visualising it
+    result = simulate(num_iterations, num_bodies)
+    print(result)
+
+
+if __name__ == "__main__":
+    main()

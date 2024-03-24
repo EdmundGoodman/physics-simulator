@@ -38,7 +38,7 @@ repos:
         language: python
         require_serial: true
         types_or: [python, pyi]
-        args: ["--fix", "--exit-non-zero-on-fix"]
+        args: ["--fix", "--show-fixes", "--exit-non-zero-on-fix"]
 
       - id: black
         name: black

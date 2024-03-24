@@ -54,7 +54,7 @@ verify: check test
 ### Execution ###
 .PHONY: run
 run: .venv/
-	@poetry run python3 -m src/physics_simulator
+	@poetry run python3 src/physics_simulator/main.py
 
 
 ### Documentation ###
