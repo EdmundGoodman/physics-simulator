@@ -75,7 +75,6 @@ ignore = [
     # "D",      # Docstrings related. We want to keep this to replace `pydocstyle`
     "D203", # Disable incompatible docstring rules to avoid warnings
     "D212", #  "
-    "D407", # Don't add dashed underlines after sections
     ### Edmund's preferences
     "UP009",  # "UTF-8 encoding declaration is unnecessary". Adding UTF-8 pragmas is best practice
     "T201",   # Allow print statements!
@@ -85,6 +84,11 @@ ignore = [
 # Support Python 3.10+.
 target-version = "py310"
 src = ["src/"]
+
+[tool.ruff.pydocstyle]
+# Use Google-style docstrings.
+convention = "google"
+
 
 [tool.vulture]
 ignore_names = ["test_*", "fixture_*", "pytest_*"]
